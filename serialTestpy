@@ -1,0 +1,48 @@
+import serial
+import time
+
+# Initialize serial connection
+ser = serial.Serial('/dev/ttyACM0', 115200, timeout=1)
+
+def send_command(command):
+    print(f"Sending command: {command}")
+    ser.write(f"{command}\r\n".encode())
+    time.sleep(0.1)
+    response = ser.read_all().decode().strip()
+    if response:
+        print(f"Response: {response}")
+
+try:
+    # Initialize motors
+    #send_command("from mindstorms import PrimeHub, Motor")
+    send_command("^C")
+    send_command("from mindstorms import Motor")
+    
+    #send_command("hub = PrimeHub()")
+    send_command("motor_a = Motor('A')")
+    send_command("motor_b = Motor('B')")
+
+    # Move motor A forward
+  #  send_command("motor_a.run_for_degrees(360, 50)")
+    send_command("motor_a.run_to_position( 50)")
+
+    # Move motor B backward
+    send_command("motor_b.run_for_degrees(-360, 50)")
+
+    # Run both motors simultaneously
+    send_command("motor_a.start(50)")
+    send_command("motor_b.start(-50)")
+    time.sleep(2)
+    send_command("motor_a.stop()")
+    send_command("motor_b.stop()")
+
+    # Get motor positions
+    send_command("print(motor_a.get_position())")
+    send_command("print(motor_b.get_position())")
+
+except Exception as e:
+    print(f"Error: {e}")
+
+finally:
+    ser.close()
+    print("Serial connection closed")
