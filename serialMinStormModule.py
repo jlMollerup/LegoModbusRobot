@@ -4,7 +4,7 @@ import time
 
 
 class RobotController:
-    def __init__(self, port='/dev/ttyACM0', baud_rate=115200, timeout=1):
+    def __init__(self, port='/dev/ttyACM0', baud_rate=115200, timeout=4):
         self.ser = None
         for attempt in range(3):
             try:
@@ -23,18 +23,27 @@ class RobotController:
 
         if self.ser is None or not self.ser.is_open:
             raise Exception("Failed to open serial connection")
+        
+        time.sleep(2)
         self.initialize_motors()
+        self.move_motor_a(100)
+        time.sleep(2)
+        self.move_motor_a(10 )
+
 
     def send_command(self, command):
         print(f"Sending command: {command}")
         self.ser.write(f"{command}\r\n".encode())
+        
         time.sleep(0.1)
         response = self.ser.read_all().decode().strip()
         if response:
             print(f"Response: {response}")
 
     def initialize_motors(self):
-        self.send_command("^C")
+        
+        self.ser.write(b'\x03')
+        time.sleep(10)
         self.send_command("from mindstorms import Motor")
         self.send_command("motor_a = Motor('A')")
         self.send_command("motor_b = Motor('B')")
@@ -56,7 +65,45 @@ class RobotController:
             print(f"Error: Unable to parse motor angle from response: {response}")
             return None
 
-    def move_motor_a(self):
+    def move_motor_a(self,agu):
+        self.send_command(f"motor_a.run_to_position({agu})")
+    def move_motor_b(self,agu):
+        self.send_command(f"motor_b.run_for_degrees({agu})")
+
+    def run_motors_simultaneously(self,agu_a,agu_b):
+        self.send_command(f"motor_a.start({agu_a})")
+        self.send_command(f"motor_b.start({agu_b})")
+        time.sleep(2)
+        self.send_command("motor_a.stop()")
+        self.send_command("motor_b.stop()")
+
+    def get_motor_positions(self):
+        self.send_command("print(motor_a.get_position())")
+        self.send_command("print(motor_b.get_position())")
+
+    def run(self):
+        try:
+
+            # self.move_motor_a()
+            # self.move_motor_b()
+            # self.run_motors_simultaneously()
+            # self.get_motor_positions()
+            print(f"vinkel er :{self.read_motor_angle(motor='B')}")
+
+        except Exception as e:
+            print(f"Error: {e}")
+        finally:
+            self.close()
+
+    def close(self):
+        time.sleep(2)
+        self.ser.close()
+        print("Serial connection closed")
+
+# Usage
+# if __name__ == "__main__":
+#     robot = RobotController()
+
         self.send_command("motor_a.run_to_position( 50)")
 
     def move_motor_b(self):
@@ -93,6 +140,6 @@ class RobotController:
         print("Serial connection closed")
 
 # Usage
-if __name__ == "__main__":
-    robot = RobotController()
-    robot.run()
+# if __name__ == "__main__":
+#     robot = RobotController()
+#     robot.run()
