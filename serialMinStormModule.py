@@ -1,10 +1,18 @@
 import serial
 import time
+import os
 
 
 
 class RobotController:
-    def __init__(self, port='/dev/ttyACM0', baud_rate=115200, timeout=4):
+
+
+
+
+    def __init__(self, baud_rate=115200, timeout=4):
+        port = self.find_available_port()
+        if port is None:
+            raise Exception("No available port found")
         self.ser = None
         for attempt in range(3):
             try:
@@ -30,6 +38,14 @@ class RobotController:
         time.sleep(2)
         self.move_motor_a(10 )
 
+    def find_available_port(self):
+        ports = ['/dev/ttyACM1', '/dev/ttyACM0']
+        for port in ports:
+            if os.path.exists(port):
+                with open('available_port.txt', 'w') as file:
+                    file.write(port)
+                return port
+        return None
 
     def send_command(self, command):
         print(f"Sending command: {command}")
@@ -68,7 +84,7 @@ class RobotController:
     def move_motor_a(self,agu):
         self.send_command(f"motor_a.run_to_position({agu})")
     def move_motor_b(self,agu):
-        self.send_command(f"motor_b.run_for_degrees({agu})")
+        self.send_command(f"motor_b.run_to_position({agu})")
 
     def run_motors_simultaneously(self,agu_a,agu_b):
         self.send_command(f"motor_a.start({agu_a})")
@@ -106,8 +122,7 @@ class RobotController:
 
         self.send_command("motor_a.run_to_position( 50)")
 
-    def move_motor_b(self):
-        self.send_command("motor_b.run_for_degrees(-360, 50)")
+
 
     def run_motors_simultaneously(self):
         self.send_command("motor_a.start(50)")

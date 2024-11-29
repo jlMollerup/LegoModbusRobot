@@ -18,19 +18,27 @@ client = ModbusTcpClient(SERVER_IP, port=SERVER_PORT)
 
 # Function to read input registers
 def read_inputs():
-    result = client.read_input_registers(INPUT_REGISTER_START, count=NUM_REGISTERS,slave=1)
-    if result.isError():
-        print(f"Error reading inputs: {result}")
-    else:
-        return result.registers
+    try:
+        result = client.read_input_registers(INPUT_REGISTER_START, count=NUM_REGISTERS,slave=1)
+        if result.isError():
+            print(f"Error reading inputs: {result}")
+        else:
+            return result.registers
+    except Exception as e:
+        print(f"Error reading inputs: {e}")
+        time.sleep(10)
 
 # Function to read output registers
 def read_outputs():
-    result = client.read_holding_registers(OUTPUT_REGISTER_START, count=NUM_REGISTERS)
-    if result.isError():
-        print(f"Error reading outputs: {result}")
-    else:
-        return result.registers
+    try:
+        result = client.read_holding_registers(OUTPUT_REGISTER_START, count=NUM_REGISTERS)
+        if result.isError():
+            print(f"Error reading outputs: {result}")
+        else:
+            return result.registers
+    except Exception as e:
+        print(f"Error reading outputs: {e}")
+        time.sleep(10)
 
 # Function to write output registers
 def write_outputs(values):
@@ -52,7 +60,7 @@ try:
         # Read inputs
         inputs = read_inputs()
         
-        if inputs != prev_inputs:
+        if inputs != prev_inputs and inputs is not None:
             for i, (prev, current) in enumerate(zip(prev_inputs or [], inputs)):
                 if prev != current:
                     match i:
@@ -63,6 +71,7 @@ try:
                         case 1:
                             print("Input 1 changed:", current)
                             # Add your custom logic here for input 1 change
+                            tool.move_motor_b(current)
                         case 2:
                             print("Input 2 changed:", current)
                             # Add your custom logic here for input 2 change
